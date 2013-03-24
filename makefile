@@ -1,0 +1,2 @@
+scala:
+	scalac IBMModel.scala
