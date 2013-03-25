@@ -1,7 +1,7 @@
 object Types {
-  type TokenizedCorpus = List[(List[String], List[String])]
   type Source = String
   type Target = String
+  type TokenizedCorpus = List[(List[Target], List[Source])]
 }
 
 class IBMModel1(corpus: Types.TokenizedCorpus, loopCount: Int) {
@@ -60,7 +60,12 @@ object IBMModelTest {
     val corpus: Types.TokenizedCorpus = sentences.map {
       case (es, fs) => (es.split(" ").toList, fs.split(" ").toList)
     }
-
-    println((new IBMModel1(corpus, 10000)).train())
+    // print the result
+    val ans = (new IBMModel1(corpus, 10000)).train()
+    println(ans)
+    println()
+    ans.foreach {
+      case (k, v) => println("%15s -> %f".format(k, v))
+    }
   }
 }

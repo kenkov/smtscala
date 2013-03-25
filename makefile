@@ -1,5 +1,5 @@
 scala:
-	scalac IBMModel.scala
+	scalac -d src IBMModel.scala
 
 .PHONY: clean
 
