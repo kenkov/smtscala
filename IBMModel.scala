@@ -1,11 +1,13 @@
 object Types {
-  type Corpus = List[(List[String], List[String])]
+  type TokenizedCorpus = List[(List[String], List[String])]
+  type Source = String
+  type Target = String
 }
 
-class IBMModel1(corpus: Types.Corpus, loopCount: Int) {
+class IBMModel1(corpus: Types.TokenizedCorpus, loopCount: Int) {
 
-  private def fsKeys(): Set[String] = {
-    var fKeys: Set[String] = Set()
+  private def targetKeys(): Set[Types.Source] = {
+    var fKeys: Set[Types.Source] = Set()
     corpus.foreach {
       case (es, fs) => fs.foreach(f => fKeys += f)
     }
@@ -13,9 +15,9 @@ class IBMModel1(corpus: Types.Corpus, loopCount: Int) {
   }
 
   //def train(corpus: Corpus, loopCount: Int): Map[(String, String), Double] = {
-  def train(): scala.collection.mutable.Map[(String, String), Double] = {
-    val fKeys = fsKeys()
-    val defaultValue = 1.0 / fKeys.size
+  def train(): scala.collection.mutable.Map[(Types.Target, Types.Source), Double] = {
+    val fKeys: Set[String] = targetKeys()
+    val defaultValue: Double = 1.0 / fKeys.size
 
     val t: scala.collection.mutable.Map[(String, String), Double] =
       scala.collection.mutable.Map().withDefaultValue(defaultValue)
@@ -50,12 +52,12 @@ class IBMModel1(corpus: Types.Corpus, loopCount: Int) {
 
 object IBMModelTest {
   def main(args: Array[String]) {
-    val sentences: List[(String, String)] =
+    val sentences: List[(Types.Target, Types.Source)] =
       List(("the house", "das Haus"),
            ("the book", "das Buch"),
            ("a book", "ein Buch"))
 
-    val corpus: Types.Corpus = sentences.map {
+    val corpus: Types.TokenizedCorpus = sentences.map {
       case (es, fs) => (es.split(" ").toList, fs.split(" ").toList)
     }
 
