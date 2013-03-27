@@ -1,2 +1,3 @@
 *.class
-src/
+bin/
+jars/

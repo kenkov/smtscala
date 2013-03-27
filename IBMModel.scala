@@ -1,12 +1,8 @@
-// object Types {
-//   type Source = String
-//   type Target = String
-//   type TokenizedCorpus = List[(List[Target], List[Source])]
-// }
-
 package jp.kenkov.smt.ibmmodel
+
 import scala.collection.mutable.{Map => MMap}
-import ibm.{_}
+import jp.kenkov.smt.{_}
+
 
 class IBMModel1(corpus: TokenizedCorpus, loopCount: Int) {
 
