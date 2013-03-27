@@ -1,10 +1,7 @@
 scala:
-	scalac -d src IBMModel.scala
+	scalac -d src IBMModel.scala package.scala
 
 .PHONY: clean
 
-run:
-	time scala IBMModelTest
-
 clean:
-	rm *.class
+	rm -r src/*
