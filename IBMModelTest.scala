@@ -1,3 +1,4 @@
+package jp.kenkov.smt.test
 import org.scalatest.FunSuite
 import scala.collection.mutable.{Map => MMap}
 import jp.kenkov.smt.{_}
