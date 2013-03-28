@@ -1,9 +1,16 @@
 package jp.kenkov {
   package object smt {
-    type Source = String
-    type Target = String
-    type Corpus = List[(Target, Source)]
-    type TokenizedCorpus = List[(List[Target], List[Source])]
+    type SourceSentence = String
+    type TargetSentence = String
+    type SourceWord = String
+    type TargetWord = String
+    type Corpus = List[(TargetSentence, SourceSentence)]
+    type TokenizedCorpus = List[(List[TargetWord], List[SourceWord])]
+    // for alignment
+    type SourceLength = Int
+    type TargetLength = Int
+    type SourcePosition = Int
+    type TargetPosition = Int
 
     def mkSentence(corpus: Corpus): TokenizedCorpus = {
       corpus.map {
