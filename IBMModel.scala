@@ -81,14 +81,14 @@ class IBMModel2(val tCorpus: TokenizedCorpus, val loopCount: Int) extends IBMMod
         val lengthE = es.length
         val lengthF = fs.length
         // compute normalization
-        for ((e, j) <- es.zipWithIndex) {
+        for ((e, j) <- es.zipWithIndex.map{case (k, i) => (k, i+1)}) {
           sTotal(e) = 0
-          for ((f, i) <- fs.zipWithIndex) {
+          for ((f, i) <- fs.zipWithIndex.map{case (k, i) => (k, i+1)}) {
             sTotal(e) += t((e, f)) * a((i, j, lengthE, lengthF))
           }
         }
-        for ((e, j) <- es.zipWithIndex) {
-          for ((f, i) <- fs.zipWithIndex) {
+        for ((e, j) <- es.zipWithIndex.map{case (k, i) => (k, i+1)}) {
+          for ((f, i) <- fs.zipWithIndex.map{case (k, i) => (k, i+1)}) {
             val c = t((e, f)) * a((i, j, lengthE, lengthF)) / sTotal(e)
             count((e, f)) += c
             total(f) += c
@@ -108,18 +108,19 @@ class IBMModel2(val tCorpus: TokenizedCorpus, val loopCount: Int) extends IBMMod
   }
 }
 
-class ViterbiAlignment(val es: TargetWords,
-                       val fs: SourceWords,
-                       val t: MMap[(TargetWord, SourceWord), Double],
-                       val a: Alignment) {
-  def calculate: MMap[Int, Int] = {
+object Alignment {
+
+  def viterbiAlignment(es: TargetWords,
+                       fs: SourceWords,
+                       t: MMap[(TargetWord, SourceWord), Double],
+                       a: Alignment) : MMap[SourceIndex, TargetIndex] = {
     val maxA: MMap[Int, Int] = MMap().withDefaultValue(0)
     val lengthE = es.length
     val lengthF = fs.length
 
-    for ((e, j) <- es.zipWithIndex) {
+    for ((e, j) <- es.zipWithIndex.map{case (k, i) => (k, i+1)}) {
       var currentMax: (Int, Double) = (0, -1)
-      for ((f, i) <- fs.zipWithIndex) {
+      for ((f, i) <- fs.zipWithIndex.map{case (k, i) => (k, i+1)}) {
         val v = t((e, f)) * a((i, j, lengthE, lengthF))
         if (currentMax._2 < v) {
           currentMax = (i, v)
@@ -128,6 +129,81 @@ class ViterbiAlignment(val es: TargetWords,
       maxA(j) = currentMax._1
     }
     maxA
+  }
+
+  def _alignment(eList: TargetList,
+                 fList: SourceList,
+                 e2f: Set[(TargetIndex,SourceIndex)],
+                 f2e: Set[(TargetIndex, SourceIndex)]): Set[(Int, Int)] = {
+    val neighboring = Set((-1, 0), (0, -1), (1, 0), (0, 1),
+                          (-1, -1), (-1, 1), (1, -1), (1, 1))
+    val m = eList.length
+    val n = fList.length
+    var ali: Set[(Int, Int)] = e2f intersect f2e
+    var setLen = ali.size
+    // marge with neighborhood
+    do {
+      setLen = ali.size
+      for (eIndex <- 1 to m) {
+        for (fIndex <- 1 to n) {
+          if (ali contains (eIndex, fIndex)) {
+            for ((eDiff, fDiff) <- neighboring) {
+              val eNew = eIndex + eDiff
+              val fNew = fIndex + fDiff
+              if (!ali.isEmpty) {
+                if ((e2f union f2e) contains (eNew, fNew)) {
+                  ali += (eNew -> fNew)
+                }
+              } else {
+                val eIndexes = ali.map { case (i, _) => i }
+                val fIndexes = ali.map { case (_, j) => j}
+                if ((!(eIndexes contains eNew) || !(fIndexes contains fNew)) &&
+                    ((e2f union f2e) contains (eNew, fNew))) {
+                  ali += (eNew -> fNew)
+                }
+              }
+            }
+          }
+        }
+      }
+    } while (setLen != ali.size)
+
+    // Finalize
+    for (eIndex <- 1 to m) {
+      for (fIndex <- 1 to n) {
+        if (!ali.isEmpty) {
+          if ((e2f union f2e) contains (eIndex, fIndex)) {
+            ali += (eIndex -> fIndex)
+          }
+        } else {
+          val eIndexes = ali.map { case (i, _) => i }
+          val fIndexes = ali.map { case (_, j) => j}
+          if ((!(eIndexes contains eIndex) || !(fIndexes contains fIndex)) &&
+              ((e2f union f2e) contains (eIndex, fIndex))) {
+            ali += (eIndex -> fIndex)
+          }
+        }
+      }
+    }
+    ali
+  }
+
+  def alignment(eList: TargetList,
+                fList: SourceList,
+                e2f: Set[(SourceIndex,TargetIndex)],
+                f2e: Set[(TargetIndex, SourceIndex)]): Set[(Int, Int)] = {
+    val _e2f = for ((i, j) <- e2f) yield (j, i)
+    _alignment(eList, fList, _e2f, f2e)
+  }
+
+  def symmetrization(es: TargetWords, fs: SourceWords, corpus: TokenizedCorpus, loopCount: Int = 1000): Set[(Int, Int)] = {
+    val f2eTrain @ (t, a) = new IBMModel2(corpus, loopCount=loopCount).train
+    val f2e = viterbiAlignment(es, fs, t, a)
+
+    val e2fCorpus = for ((i, j) <- corpus) yield (j, i)
+    val e2fTrain @ (e2ft, e2fa) = new IBMModel2(e2fCorpus, loopCount=loopCount).train
+    val e2f = viterbiAlignment(fs, es, e2ft, e2fa)
+    alignment(es, fs, e2f.toSet, f2e.toSet)
   }
 }
 
@@ -197,7 +273,7 @@ object IBMModel1Test {
     println(a)
     val es: TargetWords = List("the", "house")
     val fs: SourceWords = List("das", "Haus")
-    val ans = new ViterbiAlignment(es, fs, t, a).calculate
+    val ans = Alignment.viterbiAlignment(es, fs, t, a)
     println(ans)
   }
 
