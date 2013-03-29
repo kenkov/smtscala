@@ -3,7 +3,7 @@ import org.scalatest.FunSuite
 import scala.collection.mutable.{Map => MMap}
 import jp.kenkov.smt.{_}
 
-import jp.kenkov.smt.ibmmodel.{IBMModel1}
+import jp.kenkov.smt.ibmmodel.{IBMModel1, IBMModel2, ViterbiAlignment}
 
 class IBMModel1Test extends FunSuite {
 
@@ -21,7 +21,7 @@ class IBMModel1Test extends FunSuite {
                                                              (("the", "Haus"), 0.5),
                                                              (("house", "das"), 0.25),
                                                              (("a", "Buch"), 0.25))
-    val train = new IBMModel1(mkSentence(corpus), loopCount=1).train
+    val train = new IBMModel1(mkTokenizedCorpus(corpus), loopCount=1).train
     expect(ans) { train }
   }
 
@@ -39,7 +39,26 @@ class IBMModel1Test extends FunSuite {
                                                              ("the", "Buch") -> 0.18181818181818182,
                                                              ("a", "ein") -> 0.5714285714285715,
                                                              ("book", "Buch") -> 0.6363636363636364)
-    val train = new IBMModel1(mkSentence(corpus), loopCount=2).train
+    val train = new IBMModel1(mkTokenizedCorpus(corpus), loopCount=2).train
     expect(ans) { train }
+  }
+}
+
+
+class ViterbiAlignmentTest extends FunSuite {
+
+  test("viterbi alignment test") {
+    val corpus: List[(TargetSentence, SourceSentence)] =
+      List(("the house", "das Haus"),
+           ("the book", "das Buch"),
+           ("a book", "ein Buch"))
+    val tCorpus = mkTokenizedCorpus(corpus)
+    val (t, a) = new IBMModel2(tCorpus, 10).train
+    val es: TargetWords = List("the", "house")
+    val fs: SourceWords = List("das", "Haus")
+    val ans = new ViterbiAlignment(es, fs, t, a).calculate
+    expect(ans) {
+      MMap(0 -> 0, 1 -> 1)
+    }
   }
 }

@@ -7,20 +7,20 @@ import jp.kenkov.smt.{_}
 abstract class IBMModel {
   // def train: MMap[(TargetWord, SourceWord), Double]
 
-  def sourceKeys(corpus: TokenizedCorpus): Set[SourceWord] = {
+  def sourceKeys(tCorpus: TokenizedCorpus): Set[SourceWord] = {
     var fKeys: Set[SourceWord] = Set()
-    corpus.foreach {
+    tCorpus.foreach {
       case (es, fs) => fs.foreach(fKeys += _)
     }
     fKeys
   }
 }
 
-class IBMModel1(val corpus: TokenizedCorpus, val loopCount: Int) extends IBMModel {
+class IBMModel1(val tCorpus: TokenizedCorpus, val loopCount: Int) extends IBMModel {
 
   def train: MMap[(TargetWord, SourceWord), Double] = {
     // set fkeys
-    val fKeys: Set[SourceWord] = sourceKeys(corpus)
+    val fKeys: Set[SourceWord] = sourceKeys(tCorpus)
     // set default value
     val defaultValue: Double = 1.0 / fKeys.size
     // initialize the returned collection
@@ -37,7 +37,7 @@ class IBMModel1(val corpus: TokenizedCorpus, val loopCount: Int) extends IBMMode
         scala.collection.mutable.Map().withDefaultValue(0.0)
 
       // main algorithm
-      for ((es, fs) <- this.corpus) {
+      for ((es, fs) <- this.tCorpus) {
         for (e <- es) {
           sTotal(e) = 0.0
           for (f <- fs)
@@ -58,16 +58,15 @@ class IBMModel1(val corpus: TokenizedCorpus, val loopCount: Int) extends IBMMode
   }
 }
 
-class IBMModel2(val corpus: TokenizedCorpus, val loopCount: Int) extends IBMModel {
+class IBMModel2(val tCorpus: TokenizedCorpus, val loopCount: Int) extends IBMModel {
 
-  def train: (MMap[(TargetWord, SourceWord), Double],
-              MMap[(SourcePosition, TargetPosition, TargetLength, SourceLength), Double]) = {
-    val fKeys: Set[String] = sourceKeys(corpus)
+  def train: (MMap[(TargetWord, SourceWord), Double], Alignment) = {
+    val fKeys: Set[String] = sourceKeys(tCorpus)
     // IBMModel1 training
-    val t: MMap[(TargetWord, SourceWord), Double] = new IBMModel1(corpus, loopCount).train
+    val t: MMap[(TargetWord, SourceWord), Double] = new IBMModel1(tCorpus, loopCount).train
 
     // alignment
-    val a: MMap[(SourcePosition, TargetPosition, TargetLength, SourceLength), Double] = MMap().withDefault {
+    val a: Alignment = MMap().withDefault {
       case (i, j, lengthE, lengthF) => 1.0 / (lengthF + 1)
     }
 
@@ -78,7 +77,7 @@ class IBMModel2(val corpus: TokenizedCorpus, val loopCount: Int) extends IBMMode
       val totalA: MMap[(TargetPosition, TargetLength, SourceLength), Double] = MMap().withDefaultValue(0.0)
       val sTotal: MMap[TargetWord, Double] = MMap().withDefaultValue(0.0)
 
-      for ((es: List[TargetWord], fs: List[SourceWord]) <- corpus) {
+      for ((es: TargetWords, fs: SourceWords) <- tCorpus) {
         val lengthE = es.length
         val lengthF = fs.length
         // compute normalization
@@ -109,14 +108,35 @@ class IBMModel2(val corpus: TokenizedCorpus, val loopCount: Int) extends IBMMode
   }
 }
 
-object IBMModel1Test {
-  def testIBMModel1(sentences: List[(TargetSentence, SourceSentence)], loopCount: Int = 1000) {
-    val corpus: TokenizedCorpus = sentences.map {
-      case (es, fs) => (es.split(" ").toList, fs.split(" ").toList)
+class ViterbiAlignment(val es: TargetWords,
+                       val fs: SourceWords,
+                       val t: MMap[(TargetWord, SourceWord), Double],
+                       val a: Alignment) {
+  def calculate: MMap[Int, Int] = {
+    val maxA: MMap[Int, Int] = MMap().withDefaultValue(0)
+    val lengthE = es.length
+    val lengthF = fs.length
+
+    for ((e, j) <- es.zipWithIndex) {
+      var currentMax: (Int, Double) = (0, -1)
+      for ((f, i) <- fs.zipWithIndex) {
+        val v = t((e, f)) * a((i, j, lengthE, lengthF))
+        if (currentMax._2 < v) {
+          currentMax = (i, v)
+        }
+      }
+      maxA(j) = currentMax._1
     }
+    maxA
+  }
+}
+
+object IBMModel1Test {
+  def testIBMModel1(corpus: List[(TargetSentence, SourceSentence)], loopCount: Int = 1000) {
+    val tCorpus: TokenizedCorpus = mkTokenizedCorpus(corpus)
     // print the result
-    val model = new IBMModel1(corpus, loopCount)
-    println(model.corpus)
+    val model = new IBMModel1(tCorpus, loopCount)
+    println(model.tCorpus)
     println(model.loopCount)
     val ans = model.train
     println(ans)
@@ -126,13 +146,11 @@ object IBMModel1Test {
     }
   }
 
-  def testIBMModel2(sentences: List[(TargetSentence, SourceSentence)], loopCount: Int = 1000) {
-    val corpus: TokenizedCorpus = sentences.map {
-      case (es, fs) => (es.split(" ").toList, fs.split(" ").toList)
-    }
+  def testIBMModel2(corpus: List[(TargetSentence, SourceSentence)], loopCount: Int = 1000) {
+    val tCorpus: TokenizedCorpus = mkTokenizedCorpus(corpus)
     // print the result
-    val model = new IBMModel2(corpus, loopCount)
-    println(model.corpus)
+    val model = new IBMModel2(tCorpus, loopCount)
+    println(model.tCorpus)
     println(model.loopCount)
     val ans = model.train
     println(ans)
@@ -143,21 +161,21 @@ object IBMModel1Test {
   }
 
   def test1() {
-    val sentences: List[(TargetSentence, SourceSentence)] =
+    val tokenizedCorpus: List[(TargetSentence, SourceSentence)] =
       List(("the house", "das Haus"),
            ("the book", "das Buch"),
            ("a book", "ein Buch"))
-    testIBMModel1(sentences, 1000)
+    testIBMModel1(tokenizedCorpus, 1000)
   }
 
   def test2() {
-    val sentences = List(("X で は ない か と つくづく 疑問 に 思う",
-                          "I often wonder if it might be X."),
-                         ("X が いい な と いつも 思い ます",
-                          "I always think X would be nice."),
-                         ("それ が ある よう に いつも 思い ます",
-                          "It always seems like it is there."))
-    testIBMModel1(sentences, 10000)
+    val corpus = List(("X で は ない か と つくづく 疑問 に 思う",
+                       "I often wonder if it might be X."),
+                      ("X が いい な と いつも 思い ます",
+                       "I always think X would be nice."),
+                      ("それ が ある よう に いつも 思い ます",
+                       "It always seems like it is there."))
+    testIBMModel1(corpus, 10000)
   }
 
   def test3() {
@@ -168,7 +186,22 @@ object IBMModel1Test {
     testIBMModel2(sentences, 1000)
   }
 
+  def test4() {
+    val corpus: List[(TargetSentence, SourceSentence)] =
+      List(("the house", "das Haus"),
+           ("the book", "das Buch"),
+           ("a book", "ein Buch"))
+    val tCorpus = mkTokenizedCorpus(corpus)
+    val (t, a) = new IBMModel2(tCorpus, 10).train
+    println(t)
+    println(a)
+    val es: TargetWords = List("the", "house")
+    val fs: SourceWords = List("das", "Haus")
+    val ans = new ViterbiAlignment(es, fs, t, a).calculate
+    println(ans)
+  }
+
   def main(args: Array[String]) {
-    test3()
+    test4()
   }
 }
