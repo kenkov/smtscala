@@ -14,10 +14,9 @@ object PhraseExtract {
 
   def extract(es: TargetWords,
               fs: SourceWords,
-              alignment: Alignment): Set[(TargetPosition, TargetPosition,
-                                          SourcePosition, SourcePosition)] = {
+              alignment: Alignment): PhraseRange = {
 
-    var phrases: Set[(TargetPosition, TargetPosition, SourcePosition, SourcePosition)] = Set()
+    var phrases: PhraseRange = Set()
     val lenEs = es.length
 
     for (eStart <-1 to lenEs) {
@@ -39,13 +38,12 @@ object PhraseExtract {
 
   private def _extract(es: TargetWords,
                        fs: SourceWords,
-                       eStart: TargetPosition,
-                       eEnd: TargetPosition,
-                       fStart: SourcePosition,
-                       fEnd: SourcePosition,
-                       alignment: Alignment): Set[(TargetPosition, TargetPosition,
-                                                   SourcePosition, SourcePosition)] = {
-    var ex: Set[(TargetPosition, TargetPosition, SourcePosition, SourcePosition)] = Set()
+                       eStart: TargetStartPosition,
+                       eEnd: TargetEndPosition,
+                       fStart: SourceStartPosition,
+                       fEnd: SourceEndPosition,
+                       alignment: Alignment): PhraseRange = {
+    var ex: PhraseRange = Set()
     val alignSecond = alignment.unzip._2
 
     // check fEnd

@@ -13,16 +13,32 @@ package jp.kenkov {
     // for viterbi alignment
     type SourceLength = Int
     type TargetLength = Int
-    type SourcePosition = Int
-    type TargetPosition = Int
-    type AlignmentProbability = MMap[(SourcePosition, TargetPosition, TargetLength, SourceLength), Double]
+    type SourceWordIndex = Int
+    type TargetWordIndex = Int
+    type AlignmentProbability = MMap[(SourceWordIndex, TargetWordIndex, TargetLength, SourceLength), Double]
     // for alignment
     type SourceList = List[Any]
     type TargetList = List[Any]
     type SourceIndex = Int
     type TargetIndex = Int
-    type Position = Int
-    type Alignment = Set[(Position, Position)]
+
+    type SourcePosition = Int
+    type TargetPosition =Int
+    type Alignment = Set[(SourcePosition, TargetPosition)]
+    // for phrase extract
+    type SourceStartPosition = Int
+    type SourceEndPosition = Int
+    type TargetStartPosition = Int
+    type TargetEndPosition = Int
+
+    type StartPosition = Int
+    type EndPosition = Int
+    type Range = (StartPosition, EndPosition)
+
+    type PhraseRange = Set[(TargetStartPosition,
+                            TargetEndPosition,
+                            SourceStartPosition,
+                            SourceEndPosition)]
 
     def mkTokenizedCorpus(corpus: Corpus): TokenizedCorpus = {
       corpus.map {
