@@ -7,7 +7,7 @@ import jp.kenkov.smt.ibmmodel.{IBMModel1, IBMModel2, Alignment}
 
 class IBMModel1Test extends FunSuite {
 
-  test("ibmmodel1 test for loop 0") {
+  test("ibmmodel1 test for loop initialize") {
     val corpus: Corpus = List(("the house", "das Haus"),
                               ("the book", "das Buch"),
                               ("a book", "ein Buch"))
@@ -122,7 +122,6 @@ class AlignmentTest extends FunSuite {
     val fs = "I am a teacher".split("[ ]+").toList
     val syn = Alignment.symmetrization(es, fs, tCorpus, loopCount=1000)
     val ans = Set((1, 1), (1, 2), (2, 3), (3, 4), (4, 3))
-    println(syn)
     expect (ans) {
       syn
     }

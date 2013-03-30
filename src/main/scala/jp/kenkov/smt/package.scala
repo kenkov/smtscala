@@ -15,12 +15,14 @@ package jp.kenkov {
     type TargetLength = Int
     type SourcePosition = Int
     type TargetPosition = Int
-    type Alignment = MMap[(SourcePosition, TargetPosition, TargetLength, SourceLength), Double]
+    type AlignmentProbability = MMap[(SourcePosition, TargetPosition, TargetLength, SourceLength), Double]
     // for alignment
     type SourceList = List[Any]
     type TargetList = List[Any]
     type SourceIndex = Int
     type TargetIndex = Int
+    type Position = Int
+    type Alignment = Set[(Position, Position)]
 
     def mkTokenizedCorpus(corpus: Corpus): TokenizedCorpus = {
       corpus.map {

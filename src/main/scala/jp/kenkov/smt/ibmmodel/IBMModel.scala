@@ -60,13 +60,13 @@ class IBMModel1(val tCorpus: TokenizedCorpus, val loopCount: Int) extends IBMMod
 
 class IBMModel2(val tCorpus: TokenizedCorpus, val loopCount: Int) extends IBMModel {
 
-  def train: (MMap[(TargetWord, SourceWord), Double], Alignment) = {
+  def train: (MMap[(TargetWord, SourceWord), Double], AlignmentProbability) = {
     val fKeys: Set[String] = sourceKeys(tCorpus)
     // IBMModel1 training
     val t: MMap[(TargetWord, SourceWord), Double] = new IBMModel1(tCorpus, loopCount).train
 
     // alignment
-    val a: Alignment = MMap().withDefault {
+    val a: AlignmentProbability = MMap().withDefault {
       case (i, j, lengthE, lengthF) => 1.0 / (lengthF + 1)
     }
 
@@ -113,7 +113,7 @@ object Alignment {
   def viterbiAlignment(es: TargetWords,
                        fs: SourceWords,
                        t: MMap[(TargetWord, SourceWord), Double],
-                       a: Alignment) : MMap[SourceIndex, TargetIndex] = {
+                       a: AlignmentProbability) : MMap[SourceIndex, TargetIndex] = {
     val maxA: MMap[Int, Int] = MMap().withDefaultValue(0)
     val lengthE = es.length
     val lengthF = fs.length
@@ -196,7 +196,7 @@ object Alignment {
     _alignment(eList, fList, _e2f, f2e)
   }
 
-  def symmetrization(es: TargetWords, fs: SourceWords, corpus: TokenizedCorpus, loopCount: Int = 1000): Set[(Int, Int)] = {
+  def symmetrization(es: TargetWords, fs: SourceWords, corpus: TokenizedCorpus, loopCount: Int = 1000): Alignment = {
     val f2eTrain @ (t, a) = new IBMModel2(corpus, loopCount=loopCount).train
     val f2e = viterbiAlignment(es, fs, t, a)
 
@@ -268,7 +268,7 @@ object IBMModel1Test {
            ("the book", "das Buch"),
            ("a book", "ein Buch"))
     val tCorpus = mkTokenizedCorpus(corpus)
-    val (t, a) = new IBMModel2(tCorpus, 10).train
+    val (t, a) = new IBMModel2(tCorpus, 1000).train
     println(t)
     println(a)
     val es: TargetWords = List("the", "house")
