@@ -196,12 +196,14 @@ object Alignment {
     _alignment(eList, fList, _e2f, f2e)
   }
 
-  def symmetrization(es: TargetWords, fs: SourceWords, corpus: TokenizedCorpus, loopCount: Int = 1000): Alignment = {
-    val f2eTrain @ (t, a) = new IBMModel2(corpus, loopCount=loopCount).train
+  def symmetrization(es: TargetWords,
+                     fs: SourceWords,
+                     f2eTrain: (MMap[(TargetWord, SourceWord), Double], AlignmentProbability),
+                     e2fTrain: (MMap[(SourceWord, TargetWord), Double], AlignmentProbability)): Alignment = {
+    val (t, a) = f2eTrain
     val f2e = viterbiAlignment(es, fs, t, a)
 
-    val e2fCorpus = for ((i, j) <- corpus) yield (j, i)
-    val e2fTrain @ (e2ft, e2fa) = new IBMModel2(e2fCorpus, loopCount=loopCount).train
+    val (e2ft, e2fa) = e2fTrain
     val e2f = viterbiAlignment(fs, es, e2ft, e2fa)
     alignment(es, fs, e2f.toSet, f2e.toSet)
   }

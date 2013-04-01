@@ -117,10 +117,19 @@ class AlignmentTest extends FunSuite {
                               ("彼女 は 先生 です", "She is a teacher"),
                               ("彼 は 先生 です", "He is a teacher"))
 
-    val tCorpus = mkTokenizedCorpus(corpus)
+    // make corpus
+    val tCorpus: TokenizedCorpus = mkTokenizedCorpus(corpus)
+    val e2ftCorpus: TokenizedCorpus = tCorpus.map { case (i, j) => (j, i) }
+    // sentences
     val es = "私 は 先生 です".split("[ ]+").toList
     val fs = "I am a teacher".split("[ ]+").toList
-    val syn = Alignment.symmetrization(es, fs, tCorpus, loopCount=1000)
+    // train
+    val loopCount = 1000
+    val f2eTrain = new IBMModel2(tCorpus, loopCount=loopCount).train
+
+    val e2fTrain = new IBMModel2(e2ftCorpus, loopCount=loopCount).train
+
+    val syn = Alignment.symmetrization(es, fs, f2eTrain, e2fTrain)
     val ans = Set((1, 1), (1, 2), (2, 3), (3, 4), (4, 3))
     expect (ans) {
       syn

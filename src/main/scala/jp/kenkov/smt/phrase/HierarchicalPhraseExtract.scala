@@ -16,7 +16,6 @@ object HierarchicalPhraseExtract {
       case l => l min
     }
   }
-  // def extract(xRange: Range, yRange: Range, phrases: PhraseRange): Set[List[Int]] = {
   def extract(phrases: PhraseRange): Set[(List[Int], List[Int])] = {
     var st: Set[(List[Int], List[Int])] = Set()
     var initPhrase = phrases.map { case (tS, tE, sS, sE) => ((tS to tE).toList, (sS to sE).toList) }
@@ -47,7 +46,9 @@ object HierarchicalPhraseExtract {
     st
   }
 
-  def toStringList(es: TargetWords, fs: SourceWords, hieList: Set[(List[Int], List[Int])]): Set[String] = {
+  def toStringList(es: TargetWords,
+                   fs: SourceWords,
+                   hieList: Set[(List[Int], List[Int])]): Set[String] = {
     val esArray = es.toArray
     val fsArray = fs.toArray
     for ((tList, sList) <- hieList)

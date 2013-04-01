@@ -13,7 +13,6 @@ API
 Type synonims are defined in **jp.kenkov.smt** as
 
 .. code-block:: scala
-
     type SourceSentence = String
     type TargetSentence = String
     type SourceWord = String
@@ -22,12 +21,14 @@ Type synonims are defined in **jp.kenkov.smt** as
     type TargetWords = List[TargetWord]
     type Corpus = List[(TargetSentence, SourceSentence)]
     type TokenizedCorpus = List[(List[TargetWord], List[SourceWord])]
+
     // for viterbi alignment
     type SourceLength = Int
     type TargetLength = Int
     type SourceWordIndex = Int
     type TargetWordIndex = Int
     type AlignmentProbability = MMap[(SourceWordIndex, TargetWordIndex, TargetLength, SourceLength), Double]
+
     // for alignment
     type SourceList = List[Any]
     type TargetList = List[Any]
@@ -37,29 +38,29 @@ Type synonims are defined in **jp.kenkov.smt** as
     type SourcePosition = Int
     type TargetPosition =Int
     type Alignment = Set[(SourcePosition, TargetPosition)]
+
     // for phrase extract
     type SourceStartPosition = Int
     type SourceEndPosition = Int
     type TargetStartPosition = Int
     type TargetEndPosition = Int
 
-    type StartPosition = Int
-    type EndPosition = Int
-    type Range = (StartPosition, EndPosition)
 
     type PhraseRange = Set[(TargetStartPosition,
                             TargetEndPosition,
                             SourceStartPosition,
                             SourceEndPosition)]
 
+    // this package also provides a useful function to make a corpus as below,
+    def mkTokenizedCorpus(corpus: Corpus): TokenizedCorpus
+
 IBM Model APIs are defined in **jp.kenkov.smt.ibmmodel** as
 
-.. code-block:: scaka
+.. code-block:: scala
 
     class IBMModel1(val tCorpus: TokenizedCorpus, val loopCount: Int) extends IBMModel
 
-        def train: MMap[(TargetWord, SourceWord), Double] = {
-
+        def train: MMap[(TargetWord, SourceWord), Double]
 
     class IBMModel2(val tCorpus: TokenizedCorpus, val loopCount: Int) extends IBMModel
 
@@ -77,8 +78,10 @@ IBM Model APIs are defined in **jp.kenkov.smt.ibmmodel** as
                              t: MMap[(TargetWord, SourceWord), Double],
                              a: AlignmentProbability) : MMap[SourceIndex, TargetIndex]
 
-        def symmetrization(es: TargetWords, fs: SourceWords, corpus: TokenizedCorpus, loopCount: Int = 1000): Alignment
-
+        def symmetrization(es: TargetWords,
+                           fs: SourceWords,
+                           f2eTrain: (MMap[(TargetWord, SourceWord), Double], AlignmentProbability),
+                           e2fTrain: (MMap[(SourceWord, TargetWord), Double], AlignmentProbability)): Alignment = {
 
 Phrae extract functions are defined in **package jp.kenkov.smt.phrase** as
 
@@ -88,9 +91,8 @@ Phrae extract functions are defined in **package jp.kenkov.smt.phrase** as
 
       def phraseExtract(es: TargetWords,
                         fs: SourceWords,
-                        alignment: Alignment): Set[(TargetWords, SourceWords)] = {
-
+                        alignment: Alignment): Set[(TargetWords, SourceWords)]
 
     object HierarchicalPhraseExtract
 
-        def extract(phrases: PhraseRange): Set[(List[Int], List[Int])] = {
+        def extract(phrases: PhraseRange): Set[(List[Int], List[Int])]
