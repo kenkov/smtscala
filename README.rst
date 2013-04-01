@@ -13,6 +13,7 @@ API
 Type synonims are defined in **jp.kenkov.smt** as
 
 .. code-block:: scala
+
     type SourceSentence = String
     type TargetSentence = String
     type SourceWord = String
