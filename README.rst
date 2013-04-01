@@ -12,7 +12,7 @@ API
 
 Type synonims are defined in **jp.kenkov.smt** as
 
-::
+.. code-block:: scala
 
     type SourceSentence = String
     type TargetSentence = String
@@ -54,7 +54,7 @@ Type synonims are defined in **jp.kenkov.smt** as
 
 IBM Model APIs are defined in **jp.kenkov.smt.ibmmodel** as
 
-::
+.. code-block:: scaka
 
     class IBMModel1(val tCorpus: TokenizedCorpus, val loopCount: Int) extends IBMModel
 
@@ -82,7 +82,7 @@ IBM Model APIs are defined in **jp.kenkov.smt.ibmmodel** as
 
 Phrae extract functions are defined in **package jp.kenkov.smt.phrase** as
 
-::
+.. code-block:: scala
 
     object PhraseExtract
 
@@ -91,3 +91,6 @@ Phrae extract functions are defined in **package jp.kenkov.smt.phrase** as
                         alignment: Alignment): Set[(TargetWords, SourceWords)] = {
 
 
+    object HierarchicalPhraseExtract
+
+        def extract(phrases: PhraseRange): Set[(List[Int], List[Int])] = {
