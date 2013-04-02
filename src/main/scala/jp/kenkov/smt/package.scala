@@ -26,7 +26,7 @@ package jp.kenkov {
 
     type SourcePosition = Int
     type TargetPosition =Int
-    type Alignment = Set[(SourcePosition, TargetPosition)]
+    type Alignment = Set[(TargetPosition, SourcePosition)]
 
     // for phrase extract
     type SourceStartPosition = Int
