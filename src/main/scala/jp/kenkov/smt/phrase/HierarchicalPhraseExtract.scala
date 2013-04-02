@@ -57,7 +57,7 @@ object HierarchicalPhraseExtract {
           case d => esArray(d-1)
         }).mkString(" "),
         (sList map {
-          case x if x < 0 => "X_%d".format(x)
+          case x if x < 0 => "X_%d".format(-x)
           case d => fsArray(d-1)
         }).mkString(" ")).mkString(" | ")
   }
@@ -65,7 +65,8 @@ object HierarchicalPhraseExtract {
 
 object HierarchicalPhraseExtractMain {
   import jp.kenkov.smt.phrase.PhraseExtract
-  def main(args: Array[String]) {
+
+  def test1() {
     val fs = "I am a teacher".split("[ ]+").toList
     val es = "watashi ha sensei desu".split("[ ]+").toList
     val alignment = Set((1, 1),
@@ -78,5 +79,26 @@ object HierarchicalPhraseExtractMain {
     for (item <- HierarchicalPhraseExtract.toStringList(es, fs, hie)) {
       println(item)
     }
+  }
+
+  def test2() {
+    val fs = "He studies English.".split("[ ]+").toList
+    val es = "Kare ha eigo wo benkyo shi masu".split("[ ]+").toList
+    val alignment = Set((1, 1),
+                        (2, 1),
+                        (3, 3),
+                        (4, 3),
+                        (5, 2),
+                        (6, 2),
+                        (7, 2))
+    val phrases= PhraseExtract.extract(es, fs, alignment)
+    val hie = HierarchicalPhraseExtract.extract(phrases)
+    for (item <- HierarchicalPhraseExtract.toStringList(es, fs, hie)) {
+      println(item)
+    }
+  }
+
+  def main(args: Array[String]) {
+    test2()
   }
 }
