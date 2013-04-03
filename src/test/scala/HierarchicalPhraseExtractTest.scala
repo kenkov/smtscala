@@ -34,7 +34,7 @@ class HierarchicalPhraseExtractTest extends FunSuite {
     }
   }
 
-  test("extract test 2x2") {
+  test("hierarchical extract test 2x2") {
     val pRange: PhraseRange = Set((1, 1, 1, 1), (2, 2, 2, 2), (1, 2, 1, 2))
 
     val ans = Set((List(1, 2), List(1, 2)),
@@ -49,7 +49,7 @@ class HierarchicalPhraseExtractTest extends FunSuite {
     }
   }
 
-  test("extract test 3x5") {
+  test("hierarchical extract test 3x5") {
     val pRange: PhraseRange = Set((1, 1, 2, 3), (1, 3, 1, 5), (3, 3, 5, 5), (1, 2, 1, 4))
 
     val ans = Set(((1 to 3).toList, (1 to 5).toList),

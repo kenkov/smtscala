@@ -99,6 +99,6 @@ object HierarchicalPhraseExtractMain {
   }
 
   def main(args: Array[String]) {
-    test2()
+    test1()
   }
 }

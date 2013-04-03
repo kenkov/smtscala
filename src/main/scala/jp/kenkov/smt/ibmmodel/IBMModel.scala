@@ -209,6 +209,7 @@ object Alignment {
   }
 }
 
+/*
 object IBMModel1Test {
   def testIBMModel1(corpus: List[(TargetSentence, SourceSentence)], loopCount: Int = 1000) {
     val tCorpus: TokenizedCorpus = mkTokenizedCorpus(corpus)
@@ -283,3 +284,4 @@ object IBMModel1Test {
     test4()
   }
 }
+*/
