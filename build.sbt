@@ -11,5 +11,7 @@ libraryDependencies ++= Seq(
   // use the right Slick version here:
   "com.typesafe.slick" %% "slick" % "1.0.0",
   "org.slf4j" % "slf4j-nop" % "1.7.5",
-  "org.xerial" % "sqlite-jdbc" % "3.7.2"
+  "org.xerial" % "sqlite-jdbc" % "3.7.2",
+  // scalacheck
+  "org.scalacheck" %% "scalacheck" % "1.10.0" % "test"
 )

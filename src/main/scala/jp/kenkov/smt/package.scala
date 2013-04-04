@@ -34,15 +34,24 @@ package jp.kenkov {
     type TargetStartPosition = Int
     type TargetEndPosition = Int
 
-
     type PhraseRange = Set[(TargetStartPosition,
                             TargetEndPosition,
                             SourceStartPosition,
                             SourceEndPosition)]
 
-    def mkTokenizedCorpus(corpus: Corpus): TokenizedCorpus = {
+    // for probability
+    type Probability = Double
+    // for database
+    type DBPath = String
+
+
+    def mkTokenizedCorpus(
+      corpus: Corpus,
+      targetMethod: TargetSentence => TargetWords = x => x.split("[ ]+").toList,
+      sourceMethod: SourceSentence => SourceWords = x => x.split("[ ]+").toList): TokenizedCorpus = {
+
       corpus.map {
-        case (es, fs) => (es.split("[ ]+").toList, fs.split("[ ]+").toList)
+        case (es, fs) => (targetMethod(es), sourceMethod(fs))
       }
     }
   }
