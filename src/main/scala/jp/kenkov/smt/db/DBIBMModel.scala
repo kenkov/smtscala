@@ -104,7 +104,7 @@ object Main {
       // insert sentence pairs to sentence table
       corpus foreach { case (es, fs) => Sentence.ins.insert(es, fs) }
 
-      (new DBIBMModel(dbPath, loopCount=100)).create()
+      (new DBIBMModel(dbPath, loopCount=10)).create()
     }
   }
 }
