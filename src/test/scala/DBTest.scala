@@ -8,7 +8,7 @@ import org.scalacheck.Prop._
 // smt library
 import jp.kenkov.smt.{_}
 import jp.kenkov.smt.db.{DBSMT}
-import jp.kenkov.smt.db.{Sentence, WordProb, WordAlignment}
+import jp.kenkov.smt.db.Table.{_}
 // for DB
 import scala.slick.driver.SQLiteDriver.simple._
 import Database.threadLocalSession
@@ -32,18 +32,18 @@ class DBSMTTestSuite extends FunSuite {
     Database.forURL("jdbc:sqlite:%s".format(dbPath),
                     driver="org.sqlite.JDBC") withSession {
       try {
-        Sentence.ddl.drop
+        sentenceTable().ddl.drop
       } catch {
         case ex: java.sql.SQLException => // println("Sentence table does not exist.")
       } finally {
-        Sentence.ddl.create
+        sentenceTable().ddl.create
         // println("Create a sentence table")
       }
       //// insert an item
       for (pair <- corpus)
-        Sentence.ins.insert(pair)
+        sentenceTable().ins.insert(pair)
     }
-    DBSMT.mkTokenizedCorpus(dbPath)
+    DBSMT.mkTokenizedCorpus(dbPath, target=2, source=1)
   }
 
 

@@ -7,19 +7,24 @@ import Database.threadLocalSession
 import scala.collection.mutable.{Map => MMap}
 import jp.kenkov.smt.{_}
 import jp.kenkov.smt.db.{_}
+import jp.kenkov.smt.db.Table.{_}
 import jp.kenkov.smt.ibmmodel.{_}
 
 
 class DBIBMModel(val dbPath: DBPath,
+                 val target: Int = 2,
+                 val source: Int = 1,
                  val targetMethod: TargetSentence => TargetWords = x => x.split("[ ]+").toList,
                  val sourceMethod: SourceSentence => SourceWords = x => x.split("[ ]+").toList,
-                 val loopCount: Int = 1000) {
+                 val loopCount: Int = 5) {
   /*
    * this class require an appropreate sentence table in a database
    */
 
   def create(): Unit = {
     val tCorpus = DBSMT.mkTokenizedCorpus(dbPath,
+                                          target=target,
+                                          source=source,
                                           targetMethod=targetMethod,
                                           sourceMethod=sourceMethod)
     val ibmModel2 = new IBMModel2(tCorpus, loopCount)
@@ -29,20 +34,20 @@ class DBIBMModel(val dbPath: DBPath,
                     driver="org.sqlite.JDBC") withSession {
       //// create WordAlignment and WordProb tables
       try {
-        (WordAlignment.ddl ++ WordProb.ddl).drop
+        (wordAlignmentTable(target=target, source=source).ddl ++ wordProbTable(target=target, source=source).ddl).drop
       } catch {
         case ex: java.sql.SQLException => println("WordProb and WordAlignment tables does not exist.")
       } finally {
-        (WordProb.ddl ++ WordAlignment.ddl).create
+        (wordProbTable(target=target, source=source).ddl ++ wordAlignmentTable(target=target, source=source).ddl).create
         println("create WordProb and WordAlignment tables")
       }
 
       for (((tWord, sWord), prob) <- t) {
-        WordProb.ins.insert(tWord, sWord, prob)
+        wordProbTable(target=target, source=source).ins.insert(tWord, sWord, prob)
         // println(tWord, sWord, prob)
       }
       for (((sWIndex, tWIndex, tLen, sLen), prob) <- a) {
-        WordAlignment.ins.insert(sWIndex, tWIndex, tLen, sLen, prob)
+        wordAlignmentTable(target=target, source=source).ins.insert(sWIndex, tWIndex, tLen, sLen, prob)
         // println(sWIndex, tWIndex, tLen, sLen, prob)
       }
     }
@@ -51,13 +56,15 @@ class DBIBMModel(val dbPath: DBPath,
 
 object DBAlignment {
   def getT(dbPath: DBPath,
+           target: Int,
+           source: Int,
            e: TargetWord,
            f: SourceWord,
            defaultValue: Probability = 1e-10): Probability = {
     Database.forURL("jdbc:sqlite:%s".format(dbPath),
                     driver="org.sqlite.JDBC") withSession {
       // val q = Query(WordProb).filter(_.targetWord === e).filter(_.sourceWord === f)
-      val q =  for { wp <- WordProb if wp.targetWord === e && wp.sourceWord === f} yield wp
+      val q =  for { wp <- wordProbTable(target=target, source=source) if wp.targetWord === e && wp.sourceWord === f} yield wp
       q.firstOption match {
         case Some((id, tWord, sWord, prob)) => prob
         case None => defaultValue
@@ -66,6 +73,8 @@ object DBAlignment {
   }
 
   def getA(dbPath: DBPath,
+           target: Int,
+           source: Int,
            sourcePosition :SourcePosition,
            targetPosition :TargetPosition,
            targetLength :TargetLength,
@@ -73,7 +82,7 @@ object DBAlignment {
            defaultValue: Probability = 1e-10): Probability = {
     Database.forURL("jdbc:sqlite:%s".format(dbPath),
                     driver="org.sqlite.JDBC") withSession {
-      val q =  for { wa <- WordAlignment if
+      val q =  for { wa <- wordAlignmentTable(target=target, source=source) if
         wa.sourcePosition === sourcePosition &&
         wa.targetPosition === targetPosition &&
         wa.targetLength === targetLength &&
@@ -87,6 +96,8 @@ object DBAlignment {
   }
 
   def dbViterbiAlignment(dbPath: DBPath,
+                         target: Int,
+                         source: Int,
                          es: TargetWords,
                          fs: SourceWords,
                          initialValue: Double = 1e-10): MMap[Int, Int] = {
@@ -97,7 +108,7 @@ object DBAlignment {
     for ((e, j) <- es.zipWithIndex.map{case (k, i) => (k, i+1)}) {
       var currentMax: (Int, Double) = (0, -1)
       for ((f, i) <- fs.zipWithIndex.map{case (k, i) => (k, i+1)}) {
-        val v = getT(dbPath, e, f) * getA(dbPath, i, j, lengthE, lengthF)
+        val v = getT(dbPath, target, source, e, f) * getA(dbPath, target, source, i, j, lengthE, lengthF)
         if (currentMax._2 < v) {
           currentMax = (i, v)
         }
@@ -108,11 +119,12 @@ object DBAlignment {
   }
 
   def symmetrization(dbPath: DBPath,
-                     reverseDBPath: DBPath,
+                     target: Int,
+                     source: Int,
                      es: TargetWords,
                      fs: SourceWords): Alignment = {
-    val f2e = dbViterbiAlignment(dbPath, es, fs)
-    val e2f = dbViterbiAlignment(reverseDBPath, fs, es)
+    val f2e = dbViterbiAlignment(dbPath, target, source, es, fs)
+    val e2f = dbViterbiAlignment(dbPath, source, target, fs, es)
     jp.kenkov.smt.ibmmodel.Alignment.alignment(es, fs, e2f.toSet, f2e.toSet)
   }
 }
@@ -121,11 +133,13 @@ object DBAlignment {
 object Main {
 
   def train(originalDBPath: DBPath,
-            toDBPath: DBPath): Unit = {
+            toDBPath: DBPath,
+            target:Int,
+            source: Int): Unit = {
     var corpus = List[(TargetSentence, SourceSentence)]()
 
     Database.forURL("jdbc:sqlite:%s".format(originalDBPath), driver="org.sqlite.JDBC") withSession {
-      val q = Query(Sentence)
+      val q = Query(sentenceTable(target=target, source=source))
       // set corpus
       corpus = q.list.map {
         case (id, tS, sS) => (tS, sS)
@@ -134,33 +148,37 @@ object Main {
     Database.forURL("jdbc:sqlite:%s".format(toDBPath), driver="org.sqlite.JDBC") withSession {
       // copy sentence table
       try {
-        Sentence.ddl.drop
+        sentenceTable(target=target, source=source).ddl.drop
       } catch {
         case ex: java.sql.SQLException => println("sentence tables does not exist.")
       } finally {
-        Sentence.ddl.create
+        sentenceTable(target=target, source=source).ddl.create
         println("create sentence tables")
       }
-      corpus foreach { case (es, fs) => Sentence.ins.insert(es, fs) }
+      corpus foreach { case (es, fs) => sentenceTable(target=target, source=source).ins.insert(es, fs) }
 
       // train IBMModel2
-      (new DBIBMModel(toDBPath, loopCount=5)).create()
+      (new DBIBMModel(toDBPath, target=target, source=source, loopCount=5)).create()
     }
   }
-
-  def testCreateDB() {
+  /*
+  def testCreateDB(target: Int, source: Int) {
     val originalDBPath = "testdb/:jec_basic:"
     val dbPath = "testdb/:DBIBMModelMain:"
-    train(originalDBPath, dbPath)
+    train(originalDBPath, dbPath, target=target, source=source)
   }
+  */
 
   def dbSymmetrizationTest(): Alignment = {
-    // train("testdb/:jec:", "testdb/:train_jec:")
-    // train("testdb/:reverse_jec:", "testdb/:train_reverse_jec:")
+    val originDB = "testdb/jec/:jec:"
+    val db = "testdb/jec/:train_jec:"
+    train(originDB, db, target=2, source=1)
+    train(originDB, db, target=1, source=2)
     val es = "I am a teacher".split("[ ]+").toList
     val fs = "私 は 先生 です".split("[ ]+").toList
-    val sym = DBAlignment.symmetrization(dbPath="testdb/:train_jec:",
-                                         reverseDBPath="testdb/:train_reverse_jec:",
+    val sym = DBAlignment.symmetrization(dbPath=db,
+                                         target=1,
+                                         source=2,
                                          es=es,
                                          fs=fs)
     sym
