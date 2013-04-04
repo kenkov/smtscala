@@ -124,7 +124,7 @@ class AlignmentTest extends FunSuite {
     val es = "私 は 先生 です".split("[ ]+").toList
     val fs = "I am a teacher".split("[ ]+").toList
     // train
-    val loopCount = 1000
+    val loopCount = 100
     val f2eTrain = new IBMModel2(tCorpus, loopCount=loopCount).train
 
     val e2fTrain = new IBMModel2(e2ftCorpus, loopCount=loopCount).train
