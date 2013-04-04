@@ -22,24 +22,24 @@ class IBMModel1(val tCorpus: TokenizedCorpus, val loopCount: Int) extends IBMMod
     // set fkeys
     val fKeys: Set[SourceWord] = sourceKeys(tCorpus)
     // set default value
-    val defaultValue: Double = 1.0 / fKeys.size
+    val defaultValue: BigDecimal = BigDecimal("1.0") / BigDecimal(fKeys.size.toString)
     // initialize the returned collection
-    val t: MMap[(String, String), Double] =
+    val t: MMap[(String, String), BigDecimal] =
       scala.collection.mutable.Map().withDefaultValue(defaultValue)
 
     for (i <- 1 to loopCount) {
       // initialize vars
-      val count: MMap[(String, String), Double] =
-        scala.collection.mutable.Map().withDefaultValue(0.0)
-      val total: MMap[String, Double] =
-        scala.collection.mutable.Map().withDefaultValue(0.0)
-      val sTotal: MMap[String, Double] =
-        scala.collection.mutable.Map().withDefaultValue(0.0)
+      val count: MMap[(String, String), BigDecimal] =
+        scala.collection.mutable.Map().withDefaultValue(0)
+      val total: MMap[String, BigDecimal] =
+        scala.collection.mutable.Map().withDefaultValue(0)
+      val sTotal: MMap[String, BigDecimal] =
+        scala.collection.mutable.Map().withDefaultValue(0)
 
       // main algorithm
       for ((es, fs) <- this.tCorpus) {
         for (e <- es) {
-          sTotal(e) = 0.0
+          sTotal(e) = BigDecimal("0")
           for (f <- fs)
             sTotal(e) += t((e, f))
         }
@@ -54,7 +54,9 @@ class IBMModel1(val tCorpus: TokenizedCorpus, val loopCount: Int) extends IBMMod
         t((e, f)) = count((e, f)) / total(f)
     }
     // return the value
-    t
+    t map {
+      case (k, v) => (k, v.setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
+    }
   }
 }
 
@@ -63,26 +65,28 @@ class IBMModel2(val tCorpus: TokenizedCorpus, val loopCount: Int) extends IBMMod
   def train: (MMap[(TargetWord, SourceWord), Double], AlignmentProbability) = {
     val fKeys: Set[String] = sourceKeys(tCorpus)
     // IBMModel1 training
-    val t: MMap[(TargetWord, SourceWord), Double] = new IBMModel1(tCorpus, loopCount).train
+    val t: MMap[(TargetWord, SourceWord), BigDecimal] = new IBMModel1(tCorpus, loopCount).train.map {
+      case (k, v) => (k, BigDecimal(v.toString))
+    }
 
     // alignment
-    val a: AlignmentProbability = MMap().withDefault {
-      case (i, j, lengthE, lengthF) => 1.0 / (lengthF + 1)
+    val a: MMap[(SourceWordIndex, TargetWordIndex, TargetLength, SourceLength), BigDecimal] = MMap().withDefault {
+      case (i, j, lengthE, lengthF) => BigDecimal("1") / BigDecimal(lengthF + 1)
     }
 
     for (i <- 1 to loopCount) {
-      val count: MMap[(TargetWord, SourceWord), Double] = MMap().withDefaultValue(0.0)
-      val total: MMap[SourceWord, Double] = MMap().withDefaultValue(0.0)
-      val countA: MMap[(SourcePosition, TargetPosition, TargetLength, SourceLength), Double] = MMap().withDefaultValue(0.0)
-      val totalA: MMap[(TargetPosition, TargetLength, SourceLength), Double] = MMap().withDefaultValue(0.0)
-      val sTotal: MMap[TargetWord, Double] = MMap().withDefaultValue(0.0)
+      val count: MMap[(TargetWord, SourceWord), BigDecimal] = MMap().withDefaultValue(0)
+      val total: MMap[SourceWord, BigDecimal] = MMap().withDefaultValue(0)
+      val countA: MMap[(SourcePosition, TargetPosition, TargetLength, SourceLength), BigDecimal] = MMap().withDefaultValue(0)
+      val totalA: MMap[(TargetPosition, TargetLength, SourceLength), BigDecimal] = MMap().withDefaultValue(0)
+      val sTotal: MMap[TargetWord, BigDecimal] = MMap().withDefaultValue(0.0)
 
       for ((es: TargetWords, fs: SourceWords) <- tCorpus) {
         val lengthE = es.length
         val lengthF = fs.length
         // compute normalization
         for ((e, j) <- es.zipWithIndex.map{case (k, i) => (k, i+1)}) {
-          sTotal(e) = 0
+          sTotal(e) = BigDecimal(0)
           for ((f, i) <- fs.zipWithIndex.map{case (k, i) => (k, i+1)}) {
             sTotal(e) += t((e, f)) * a((i, j, lengthE, lengthF))
           }
@@ -104,7 +108,8 @@ class IBMModel2(val tCorpus: TokenizedCorpus, val loopCount: Int) extends IBMMod
         a((i, j, lengthE, lengthF)) = countA((i, j, lengthE, lengthF)) / totalA((j, lengthE, lengthF))
       }
     }
-    (t, a)
+    (t map { case (k, v) => (k, v.setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble) },
+     a map { case (k, v) => (k, v.setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble) })
   }
 }
 

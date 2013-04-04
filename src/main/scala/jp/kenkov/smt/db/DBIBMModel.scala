@@ -6,17 +6,24 @@ import Database.threadLocalSession
 //
 import scala.collection.mutable.{Map => MMap}
 import jp.kenkov.smt.{_}
-import jp.kenkov.smt.db.{Sentence, WordProb, WordAlignment}
+import jp.kenkov.smt.db.{_}
+import jp.kenkov.smt.ibmmodel.{_}
 
 
-
-
-class DBIBMModel(val targetMethod: TargetSentence => TargetWords,
-                 val sourceMethod: SourceSentence => SourceWords,
-                 val dbPath: DBPath,
+class DBIBMModel(val dbPath: DBPath,
+                 val targetMethod: TargetSentence => TargetWords = x => x.split("[ ]+").toList,
+                 val sourceMethod: SourceSentence => SourceWords = x => x.split("[ ]+").toList,
                  val loopCount: Int = 1000) {
+  /*
+   * this class require an appropreate sentence table in a database
+   */
 
   def create(): Unit = {
+    val tCorpus = DBSMT.mkTokenizedCorpus(dbPath,
+                                          targetMethod=targetMethod,
+                                          sourceMethod=sourceMethod)
+    val ibmModel2 = new IBMModel2(tCorpus, loopCount)
+    val (t: MMap[(TargetWord, SourceWord), Double], a: AlignmentProbability) = ibmModel2.train
     // start sqlite session
     Database.forURL("jdbc:sqlite:%s".format(dbPath),
                     driver="org.sqlite.JDBC") withSession {
@@ -29,39 +36,75 @@ class DBIBMModel(val targetMethod: TargetSentence => TargetWords,
         (WordProb.ddl ++ WordAlignment.ddl).create
         println("create WordProb and WordAlignment tables")
       }
+
+      for (((tWord, sWord), prob) <- t) {
+        WordProb.ins.insert(tWord, sWord, prob)
+        // println(tWord, sWord, prob)
+      }
+      for (((sWIndex, tWIndex, tLen, sLen), prob) <- a) {
+        WordAlignment.ins.insert(sWIndex, tWIndex, tLen, sLen, prob)
+        // println(sWIndex, tWIndex, tLen, sLen, prob)
+      }
     }
   }
 }
 
-
 /*
-object Main {
+object DBAlignment {
+  def dbViterbiAlignment(dbPath: DBPath,
+                         es: TargetWords,
+                         fs: SourceWords,
+                         initialValue: Double): MMap[Int, Int] = {
+    val maxA: MMap[Int, Int] = MMap().withDefaultValue(0)
+    val lengthE = es.length
+    val lengthF = fs.length
 
-  def main(args: Array[String]) {
-    Database.forURL("jdbc:sqlite::memory:", driver="org.sqlite.JDBC") withSession {
-      //// create a table
-      try {
-        Person.ddl.drop
-      } catch {
-        case ex: java.sql.SQLException => println("person table does not exist.")
-      } finally {
-        Person.ddl.create
-        println("create person table")
+    for ((e, j) <- es.zipWithIndex.map{case (k, i) => (k, i+1)}) {
+      var currentMax: (Int, Double) = (0, -1)
+      for ((f, i) <- fs.zipWithIndex.map{case (k, i) => (k, i+1)}) {
+        val v = t((e, f)) * a((i, j, lengthE, lengthF))
+        if (currentMax._2 < v) {
+          currentMax = (i, v)
+        }
       }
-      //// insert an item
-      Person.ins.insertAll(("kenkov", 17),
-                           ("hoge", 18),
-                           ("fuga", 19))
-      //// print
-      // Query(Person) foreach {
-      //   case (id, name, age) => println(id, name, age + 12)
-      // }
-
-      val allQuery = for { p <- Person } yield p
-      println(Query(Query(Person).length).first)
-      println(allQuery.list)
-      println(Query(Person).filter(_.age === 20).firstOption)
+      maxA(j) = currentMax._1
     }
+    maxA
   }
 }
 */
+
+
+object Main {
+
+  def main(args: Array[String]) {
+    val originalDBPath = "testdb/:jec_basic:"
+    val dbPath = "testdb/:DBIBMModelMain:"
+    var corpus = List[(TargetSentence, SourceSentence)]()
+
+    Database.forURL("jdbc:sqlite:%s".format(originalDBPath), driver="org.sqlite.JDBC") withSession {
+      val q = Query(Sentence)
+      // set corpus
+      corpus = q.list.map {
+        case (id, tS, sS) => (tS, sS)
+      }
+    }
+    Database.forURL("jdbc:sqlite:%s".format(dbPath), driver="org.sqlite.JDBC") withSession {
+      //// create a table
+      /*
+      try {
+        Sentence.ddl.drop
+      } catch {
+        case ex: java.sql.SQLException => println("sentence table does not exist.")
+      } finally {
+        Sentence.ddl.create
+        println("create sentence table")
+      }
+      */
+      // insert sentence pairs to sentence table
+      corpus foreach { case (es, fs) => Sentence.ins.insert(es, fs) }
+
+      (new DBIBMModel(dbPath, loopCount=100)).create()
+    }
+  }
+}
