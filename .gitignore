@@ -3,3 +3,4 @@ bin/
 jars/
 target/
 lib/
+testdb/

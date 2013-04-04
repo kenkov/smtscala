@@ -49,14 +49,14 @@ class DBSMTTestSuite extends FunSuite {
 
   test("mkTokenizedCorpus test for db List()") {
     val corpus: Corpus = List()
-    expect(initCorpusDB(corpus, ":test2:")) {
+    expect(initCorpusDB(corpus, "testdb/:test:")) {
       jp.kenkov.smt.mkTokenizedCorpus(corpus)
     }
   }
 
   test("mkTokenizedCorpus test for db List(\"\", \"\")") {
     val corpus: Corpus = List(("", ""))
-    expect(initCorpusDB(corpus, ":test3:")) {
+    expect(initCorpusDB(corpus, "testdb/:test:")) {
       jp.kenkov.smt.mkTokenizedCorpus(corpus)
     }
   }
