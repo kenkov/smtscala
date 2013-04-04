@@ -33,6 +33,6 @@ object WordAlignment extends Table[(Int, SourcePosition, TargetPosition, TargetL
   def sourceLength = column[SourceLength]("source_length")
   def prob = column[Probability]("prob")
   def * = id ~ sourcePosition ~ targetPosition ~ targetLength ~ sourceLength ~ prob
-  def ins = id ~ sourcePosition ~ targetPosition ~ targetLength ~ sourceLength ~ prob returning id
+  def ins = sourcePosition ~ targetPosition ~ targetLength ~ sourceLength ~ prob returning id
 }
 

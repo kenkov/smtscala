@@ -50,8 +50,11 @@ class IBMModel1(val tCorpus: TokenizedCorpus, val loopCount: Int) extends IBMMod
           }
         }
       }
-      for ((e, f) <- count.keys)
+      for ((e, f) <- count.keys) {
+        val v = count((e, f)) / total(f)
         t((e, f)) = count((e, f)) / total(f)
+        // println(v, t((e, f)))
+      }
     }
     // return the value
     t
@@ -97,8 +100,10 @@ class IBMModel2(val tCorpus: TokenizedCorpus, val loopCount: Int) extends IBMMod
           }
         }
       }
-      for ((e, f) <- count.keys) {
+      for (((e, f), i) <- count.keys.zipWithIndex) {
         t((e, f)) = count((e, f)) / total(f)
+        // if (i % 1000 == 0)
+        //   println(e, f, t((e, f)))
       }
       for ((i, j, lengthE, lengthF) <- countA.keys) {
         a((i, j, lengthE, lengthF)) = countA((i, j, lengthE, lengthF)) / totalA((j, lengthE, lengthF))
@@ -114,7 +119,7 @@ object Alignment {
                        fs: SourceWords,
                        t: MMap[(TargetWord, SourceWord), Double],
                        a: AlignmentProbability) : MMap[SourceIndex, TargetIndex] = {
-    val maxA: MMap[Int, Int] = MMap().withDefaultValue(0)
+    val maxA: MMap[SourceIndex, TargetIndex] = MMap().withDefaultValue(0)
     val lengthE = es.length
     val lengthF = fs.length
 
