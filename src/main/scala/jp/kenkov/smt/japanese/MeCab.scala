@@ -59,6 +59,20 @@ class Keitaiso(val hyousoukei: String,
                        katuyoukei, katuyougata, genkei, yomi, hatuon).mkString(",") + ")"
   }
 
+  override def equals(that: Any): Boolean = that match {
+    case other: Keitaiso =>
+      other.hyousoukei == hyousoukei &&
+      other.hinsi == hinsi &&
+      other.hinsi1 == hinsi1 &&
+      other.hinsi2 == hinsi2 &&
+      other.hinsi3 == hinsi3 &&
+      other.katuyoukei == katuyoukei &&
+      other.katuyougata == katuyougata &&
+      other.genkei == genkei &&
+      other.yomi == yomi &&
+      other.hatuon == hatuon
+    case _ => false
+  }
 }
 
 
