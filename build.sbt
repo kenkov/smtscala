@@ -4,7 +4,20 @@ version := "0.1"
 
 scalaVersion := "2.10.1"
 
-scalacOptions += "-deprecation"
+fork := true
+
+javaOptions ++= Seq("-Dfile.encoding=UTF-8",
+                    "-Xmx1536M",
+                    "-Xss1M",
+                    "-XX:+CMSClassUnloadingEnabled",
+                    "-XX:MaxPermSize=384M")
+
+scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation")
+
+javacOptions ++= Seq("-encoding", "UTF-8")
+
+
+outputStrategy := Some(StdoutOutput)
 
 libraryDependencies ++= Seq(
   "org.scalatest" % "scalatest_2.10" % "1.9.1" % "test",
