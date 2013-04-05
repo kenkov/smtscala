@@ -6,7 +6,12 @@ object Keitaiso {
   type Words = List[String]
 
   def parseKeitaiso(surface: String, chasenData: String): Keitaiso = {
-    val data = chasenData.split(",").toList
+    var data = chasenData.split(",").toList
+    /* for kind of number */
+    data.length match {
+      case 9 =>
+      case x if x < 9 => data ++= (for (i <- 1 to (9 - x)) yield "*").toList
+    }
     new Keitaiso(surface,
                  data(0),
                  data(1),

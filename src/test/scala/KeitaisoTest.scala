@@ -24,19 +24,25 @@ class KeitaisoTest extends FunSuite {
     val exp: Keitaiso = new Keitaiso(hyousoukei, hinsi, hinsi1, hinsi2, hinsi3,
                                      katuyoukei, katuyougata, genkei, yomi, hatuon)
     expect(exp) { k }
-    /*
-    l = Keitaiso(u'1000\t名詞,数,*,*,*,*,*')
-    assert l.chasen_data == u'1000\t名詞,数,*,*,*,*,*'
-    assert l.hyousoukei == u'1000'
-    assert l.hinsi == u'名詞'
-    assert l.hinsi1 == u'数'
-    assert l.hinsi2 == u'*'
-    assert l.hinsi3 == u'*'
-    assert l.katuyoukei == u'*'
-    assert l.katuyougata == u'*'
-    assert l.genkei == u'*'
-    assert l.yomi == u'*'
-    assert l.hatuon == u'*'
-    */
+  }
+
+  test("parseKeitaiso test 1000") {
+
+    val k: Keitaiso = Keitaiso.parseKeitaiso("1000",
+                                             "名詞,数,*,*,*,*,*")
+    val hyousoukei = "1000"
+    val hinsi = "名詞"
+    val hinsi1 = "数"
+    val hinsi2 = "*"
+    val hinsi3 = "*"
+    val katuyoukei = "*"
+    val katuyougata = "*"
+    val genkei = "*"
+    val yomi = "*"
+    val hatuon = "*"
+
+    val exp: Keitaiso = new Keitaiso(hyousoukei, hinsi, hinsi1, hinsi2, hinsi3,
+                                     katuyoukei, katuyougata, genkei, yomi, hatuon)
+    expect(exp) { k }
   }
 }
