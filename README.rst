@@ -7,6 +7,23 @@ What is this?
 
 This package implements basic Statistical Machine Translation (SMT) functions by Scala.
 
+Required
+==============
+
+You should install
+
+*   Sen and Sen-java binding
+*   MeCab and Mecab-java binding
+
+You should following jar files and put it into lib directory
+
+*   MeCab.jar (you can gen it thorough installing the MeCab binding)
+*   commons-logging.jar (thorough installing the Sen binding)
+*   junit.jar (thorough installing the Sen binding)
+*   sen.jar (thorough installing the Sen binding)
+
+You should download jar files and 
+
 API
 =====
 
