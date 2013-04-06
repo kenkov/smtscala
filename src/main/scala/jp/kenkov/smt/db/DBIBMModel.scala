@@ -15,8 +15,8 @@ import jp.kenkov.smt.japanese.sen.{Keitaiso}
 class DBIBMModel(val dbPath: DBPath,
                  val target: Int = 2,
                  val source: Int = 1,
-                 val targetMethod: TargetSentence => TargetWords = x => x.split("[ ]+").toList,
-                 val sourceMethod: SourceSentence => SourceWords = x => x.split("[ ]+").toList,
+                 val targetMethod: TargetSentence => TargetWords = x => x.split("""\s+""").toList,
+                 val sourceMethod: SourceSentence => SourceWords = x => x.split("""\s+""").toList,
                  val loopCount: Int = 5) {
   /*
    * this class require an appropreate sentence table in a database
@@ -139,8 +139,8 @@ object Main {
             toDBPath: DBPath,
             target:Int,
             source: Int,
-            targetMethod: TargetSentence => TargetWords = x => x.split("[ ]+").toList,
-            sourceMethod: SourceSentence => SourceWords = x => x.split("[ ]+").toList) {
+            targetMethod: TargetSentence => TargetWords = x => x.split("""\s""").toList,
+            sourceMethod: SourceSentence => SourceWords = x => x.split("""\s""").toList) {
     var corpus = List[(TargetSentence, SourceSentence)]()
 
     // setup for copy sentence table
@@ -183,8 +183,8 @@ object Main {
           targetMethod=Keitaiso.stringToWords)
     train(originDB, db, target=2, source=1,
           sourceMethod=Keitaiso.stringToWords)
-    val es = "I am a teacher".split("[ ]+").toList
-    val fs = "私 は 先生 です".split("[ ]+").toList
+    val es = "I am a teacher".split("""\s""").toList
+    val fs = "私 は 先生 です".split("""\s""").toList
     val sym = DBAlignment.symmetrization(dbPath=db,
                                          target=1,
                                          source=2,
@@ -195,8 +195,8 @@ object Main {
 
   def hierarchicalTest() {
     val db = "testdb/jec/:train_jec:"
-    val es = "I like him".split("[ ]+").toList
-    val fs = "私 は 彼 が 好き です".split("[ ]+").toList
+    val es = "I like him".split("""\s""").toList
+    val fs = "私 は 彼 が 好き です".split("""\s""").toList
     val sym = DBAlignment.symmetrization(dbPath=db,
                                          target=1,
                                          source=2,
@@ -222,12 +222,8 @@ object Main {
 
   def twitterHieTest() {
     val db = "testdb/twitter/:train_twitter:"
-    val x = "おはようございます。"
-    println(Keitaiso.stringToKeitaisos(x))
-    val es = Keitaiso.stringToWords(x)
-    val fs = Keitaiso.stringToWords(x)
-    // val es = "おはよう ござい ます。".split(" ").toList
-    // val fs = "ありがとう ござい ます。".split(" ").toList
+    val es = Keitaiso.stringToWords("今日階段でこけたっ")
+    val fs = Keitaiso.stringToWords("なんとっ!!お大事にしてくださいっ><")
     println(es, fs)
     val sym = DBAlignment.symmetrization(dbPath=db,
                                          target=1,
@@ -276,28 +272,5 @@ object DBTest {
       // set corpus
       println(q.firstOption)
     }
-  }
-}
-
-object SenTest {
-  import net.java.sen.{StringTagger, Token}
-  import java.util.Locale
-
-  def main(args:Array[String]):Unit = {
-    val input = "これが解析したい文字列" //解析したい文章
-    // System.setProperty("sen.home","/usr/sen")
-    val tagger = StringTagger.getInstance(Locale.JAPANESE)
-    val token = tagger.analyze(input)
-    token.foreach(t => {
-      println("---")
-      println(t.toString())
-      println(t.getBasicString())
-      println(t.getPos())
-      println(t.getPronunciation())
-      println(t.getReading())
-      println(t.length())
-      println(t.start())
-      println(t.end())
-    })
   }
 }

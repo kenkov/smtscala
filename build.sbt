@@ -10,13 +10,13 @@ javaOptions ++= Seq("-Dfile.encoding=UTF-8",
                     "-Xmx4000M",
                     "-XX:+CMSClassUnloadingEnabled",
                     "-XX:MaxNewSize=2000M",
-                    "-XX:MaxPermSize=2000M",
-                    // for sen
-                    /// This line should be set by the environment variable $SEN_HOME,
-                    /// but I don't know how to use vir envs in build.sbt
-                    "-Dsen.home=sen",
-                    /// to erase the "情報" line
-                    "-Dorg.apache.commons.logging.Log=org.apache.commons.logging.impl.NoOpLog")
+                    "-XX:MaxPermSize=2000M")
+                    // // for sen
+                    // /// This line should be set by the environment variable $SEN_HOME,
+                    // /// but I don't know how to use vir envs in build.sbt
+                    // "-Dsen.home=sen",
+                    // /// to erase the "情報" line
+                    // "-Dorg.apache.commons.logging.Log=org.apache.commons.logging.impl.NoOpLog")
 
 scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation")
 

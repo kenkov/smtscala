@@ -1,3 +1,4 @@
+/*
 package jp.kenkov.smt.japanese.mecab
 import org.chasen.mecab.{MeCab, Tagger, Node}
 
@@ -8,7 +9,6 @@ object Keitaiso {
 
   def parseKeitaiso(surface: String, chasenData: String): Keitaiso = {
     var data = chasenData.split(",").toList
-    /* for kind of number */
     data.length match {
       case 9 =>
       case x if x < 9 => data ++= (for (i <- 1 to (9 - x)) yield "*").toList
@@ -53,12 +53,6 @@ class Keitaiso(val hyousoukei: String,
                val genkei: String,
                val yomi: String,
                val hatuon: String) {
-  /*
-  MeCab 形式
-  表層形\t品詞,品詞細分類1,品詞細分類2,品詞細分類3,活用形,活用型,原形,読み,発音
-
-  を取り扱うクラス
-  */
   override def toString: String = {
     "Keitaiso(" + List(hyousoukei, hinsi, hinsi1, hinsi2, hinsi3,
                        katuyoukei, katuyougata, genkei, yomi, hatuon).mkString(",") + ")"
@@ -88,3 +82,4 @@ object Test {
     words foreach { x => println(Keitaiso.stringToWords(x)) }
   }
 }
+*/
