@@ -12,7 +12,7 @@ Required
 
 You should put the following jar file in the **lib/** directory:
 
-*   lucene-gosen
+*   `lucene-gosen <http://code.google.com/p/lucene-gosen/>`_
 
 API
 =====
