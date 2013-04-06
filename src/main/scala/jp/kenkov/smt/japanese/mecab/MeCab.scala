@@ -1,4 +1,3 @@
-/*
 package jp.kenkov.smt.japanese.mecab
 import org.chasen.mecab.{MeCab, Tagger, Node}
 
@@ -82,4 +81,3 @@ object Test {
     words foreach { x => println(Keitaiso.stringToWords(x)) }
   }
 }
-*/
