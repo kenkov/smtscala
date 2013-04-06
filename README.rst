@@ -15,7 +15,7 @@ You should install
 *   Sen and Sen-java binding
 *   MeCab and Mecab-java binding
 
-You should following jar files and put it into lib directory
+You should get following jar files and put it into lib directory
 
 *   MeCab.jar (you can gen it thorough installing the MeCab binding)
 *   commons-logging.jar (thorough installing the Sen binding)
