@@ -1,7 +1,8 @@
-package jp.kenkov.smt.japanese
+package jp.kenkov.smt.japanese.mecab
 import org.chasen.mecab.{MeCab, Tagger, Node}
 
 object Keitaiso {
+  System.loadLibrary("MeCab");
 
   type Words = List[String]
 
@@ -25,7 +26,6 @@ object Keitaiso {
   }
 
   def stringToKeitaisos(str: String): List[Keitaiso] = {
-    System.loadLibrary("MeCab");
 
     val tagger = new Tagger;
     var node:Node = tagger.parseToNode(str);
@@ -79,8 +79,6 @@ class Keitaiso(val hyousoukei: String,
     case _ => false
   }
 }
-
-
 
 object Test {
   def main(args: Array[String]) {

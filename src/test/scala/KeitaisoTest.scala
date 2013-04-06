@@ -3,7 +3,7 @@ import org.scalatest.FunSuite
 import scala.collection.mutable.{Map => MMap}
 import jp.kenkov.smt.{_}
 
-import jp.kenkov.smt.japanese.{Keitaiso}
+import jp.kenkov.smt.japanese.mecab.{Keitaiso}
 
 class KeitaisoTest extends FunSuite {
   test("parseKeitaiso test 動く") {

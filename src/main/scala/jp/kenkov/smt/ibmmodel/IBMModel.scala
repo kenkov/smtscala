@@ -118,8 +118,8 @@ object Alignment {
   def viterbiAlignment(es: TargetWords,
                        fs: SourceWords,
                        t: MMap[(TargetWord, SourceWord), Double],
-                       a: AlignmentProbability) : MMap[SourceIndex, TargetIndex] = {
-    val maxA: MMap[SourceIndex, TargetIndex] = MMap().withDefaultValue(0)
+                       a: AlignmentProbability) : MMap[TargetIndex, SourceIndex] = {
+    val maxA: MMap[TargetIndex, SourceIndex] = MMap().withDefaultValue(0)
     val lengthE = es.length
     val lengthF = fs.length
 

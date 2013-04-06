@@ -9,6 +9,7 @@ import jp.kenkov.smt.{_}
 import jp.kenkov.smt.db.{_}
 import jp.kenkov.smt.db.Table.{_}
 import jp.kenkov.smt.ibmmodel.{_}
+import jp.kenkov.smt.japanese.sen.{Keitaiso}
 
 
 class DBIBMModel(val dbPath: DBPath,
@@ -100,8 +101,8 @@ object DBAlignment {
                          source: Int,
                          es: TargetWords,
                          fs: SourceWords,
-                         initialValue: Double = 1e-10): MMap[Int, Int] = {
-    val maxA: MMap[Int, Int] = MMap().withDefaultValue(0)
+                         initialValue: Double = 1e-10): MMap[TargetIndex, SourceIndex] = {
+    val maxA: MMap[TargetIndex, SourceIndex] = MMap().withDefaultValue(0)
     val lengthE = es.length
     val lengthF = fs.length
 
@@ -132,12 +133,17 @@ object DBAlignment {
 
 object Main {
 
+  import jp.kenkov.smt.phrase.{_}
+
   def train(originalDBPath: DBPath,
             toDBPath: DBPath,
             target:Int,
-            source: Int): Unit = {
+            source: Int,
+            targetMethod: TargetSentence => TargetWords = x => x.split("[ ]+").toList,
+            sourceMethod: SourceSentence => SourceWords = x => x.split("[ ]+").toList) {
     var corpus = List[(TargetSentence, SourceSentence)]()
 
+    // setup for copy sentence table
     Database.forURL("jdbc:sqlite:%s".format(originalDBPath), driver="org.sqlite.JDBC") withSession {
       val q = Query(sentenceTable(target=target, source=source))
       // set corpus
@@ -158,7 +164,8 @@ object Main {
       corpus foreach { case (es, fs) => sentenceTable(target=target, source=source).ins.insert(es, fs) }
 
       // train IBMModel2
-      (new DBIBMModel(toDBPath, target=target, source=source, loopCount=5)).create()
+      (new DBIBMModel(toDBPath, target=target, source=source,
+                      targetMethod=targetMethod, sourceMethod=sourceMethod, loopCount=5)).create()
     }
   }
   /*
@@ -172,8 +179,10 @@ object Main {
   def dbSymmetrizationTest(): Alignment = {
     val originDB = "testdb/jec/:jec:"
     val db = "testdb/jec/:train_jec:"
-    train(originDB, db, target=2, source=1)
-    train(originDB, db, target=1, source=2)
+    train(originDB, db, target=1, source=2,
+          targetMethod=Keitaiso.stringToWords)
+    train(originDB, db, target=2, source=1,
+          sourceMethod=Keitaiso.stringToWords)
     val es = "I am a teacher".split("[ ]+").toList
     val fs = "私 は 先生 です".split("[ ]+").toList
     val sym = DBAlignment.symmetrization(dbPath=db,
@@ -183,8 +192,62 @@ object Main {
                                          fs=fs)
     sym
   }
+
+  def hierarchicalTest() {
+    val db = "testdb/jec/:train_jec:"
+    val es = "I like him".split("[ ]+").toList
+    val fs = "私 は 彼 が 好き です".split("[ ]+").toList
+    val sym = DBAlignment.symmetrization(dbPath=db,
+                                         target=1,
+                                         source=2,
+                                         es=es,
+                                         fs=fs)
+    val phraseRange = PhraseExtract.extract(es, fs, sym)
+    val hie = HierarchicalPhraseExtract.extract(phraseRange)
+    println(sym)
+    println(phraseRange)
+    println(hie)
+    println(HierarchicalPhraseExtract.toStringList(es, fs, hie))
+  }
+
+  def twitterDBCreate() {
+    val db = "testdb/twitter/:train_twitter:"
+    // train IBMModel2
+    // val method = Keitaiso.stringToWords _
+    (new DBIBMModel(db, target=1, source=2,
+                    loopCount=5)).create()
+    (new DBIBMModel(db, target=2, source=1,
+                    loopCount=5)).create()
+  }
+
+  def twitterHieTest() {
+    val db = "testdb/twitter/:train_twitter:"
+    val x = "おはようございます。"
+    println(Keitaiso.stringToKeitaisos(x))
+    val es = Keitaiso.stringToWords(x)
+    val fs = Keitaiso.stringToWords(x)
+    // val es = "おはよう ござい ます。".split(" ").toList
+    // val fs = "ありがとう ござい ます。".split(" ").toList
+    println(es, fs)
+    val sym = DBAlignment.symmetrization(dbPath=db,
+                                         target=1,
+                                         source=2,
+                                         es=es,
+                                         fs=fs)
+    val phraseRange = PhraseExtract.extract(es, fs, sym)
+    println(sym)
+    println(phraseRange)
+    val hie = HierarchicalPhraseExtract.extract(phraseRange)
+    println(hie)
+    for (x <- HierarchicalPhraseExtract.toStringList(es, fs, hie)) {
+      println(x)
+    }
+  }
+
   def main(args: Array[String]) {
-    println(dbSymmetrizationTest)
+    // println(dbSymmetrizationTest)
+    // twitterDBCreate()
+    twitterHieTest()
   }
 }
 
@@ -213,5 +276,28 @@ object DBTest {
       // set corpus
       println(q.firstOption)
     }
+  }
+}
+
+object SenTest {
+  import net.java.sen.{StringTagger, Token}
+  import java.util.Locale
+
+  def main(args:Array[String]):Unit = {
+    val input = "これが解析したい文字列" //解析したい文章
+    // System.setProperty("sen.home","/usr/sen")
+    val tagger = StringTagger.getInstance(Locale.JAPANESE)
+    val token = tagger.analyze(input)
+    token.foreach(t => {
+      println("---")
+      println(t.toString())
+      println(t.getBasicString())
+      println(t.getPos())
+      println(t.getPronunciation())
+      println(t.getReading())
+      println(t.length())
+      println(t.start())
+      println(t.end())
+    })
   }
 }
